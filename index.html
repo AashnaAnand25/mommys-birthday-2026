@@ -48,6 +48,23 @@
 
   .vignette{position:fixed; inset:0; z-index:1; pointer-events:none;
     background:radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(4,6,14,0.75) 100%);}
+
+  /* ---------- MRI SCAN SWEEP ---------- */
+  .scan-sweep{position:fixed; top:0; left:-30%; width:22%; height:100%; z-index:3; pointer-events:none;
+    background:linear-gradient(100deg, transparent, rgba(79,227,208,0.05) 35%, rgba(169,139,255,0.1) 50%, rgba(79,227,208,0.05) 65%, transparent);
+    mix-blend-mode:screen; animation:scanSweep 11s cubic-bezier(.4,0,.2,1) infinite;}
+  @keyframes scanSweep{0%{transform:translateX(0);}28%{transform:translateX(150vw);}100%{transform:translateX(150vw);}}
+  @media (prefers-reduced-motion: reduce){ .scan-sweep{display:none;} }
+
+  /* ---------- TICKER ---------- */
+  .ticker-wrap{position:relative; overflow:hidden; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+    padding:13px 0; background:rgba(255,255,255,0.015);}
+  .ticker-track{display:flex; width:max-content; gap:52px; animation:tickerScroll 32s linear infinite;}
+  .ticker-item{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.03em; color:var(--text-faint);
+    white-space:nowrap; display:flex; align-items:center; gap:11px;}
+  .ticker-item::before{content:"●"; color:var(--cyan); font-size:7px;}
+  @keyframes tickerScroll{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+  @media (prefers-reduced-motion: reduce){ .ticker-track{animation:none;} }
   .spotlight{position:fixed; inset:0; z-index:1; pointer-events:none; mix-blend-mode:screen; transition:opacity .4s ease;
     background:radial-gradient(420px circle at var(--mx,50%) var(--my,-30%), rgba(79,227,208,0.10), rgba(169,139,255,0.05) 40%, transparent 62%);}
   .tag{transition:border-color .3s ease, box-shadow .3s ease, transform .3s ease;}
@@ -118,6 +135,14 @@
   .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; padding:6px 12px; border:1px solid var(--rule);
     border-radius:30px; color:var(--text); background:rgba(255,255,255,0.02);}
   .tag.joke{color:var(--magenta); border-color:rgba(255,92,138,0.4);}
+
+  .live-stat{margin-top:22px; display:inline-flex; align-items:center; gap:10px; font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--text-faint); letter-spacing:0.03em; padding:9px 16px; border:1px solid var(--rule);
+    border-radius:30px; background:rgba(255,255,255,0.02);}
+  .live-stat b{color:var(--cyan); font-weight:600;}
+  .live-dot{width:7px; height:7px; border-radius:50%; background:#FF5C6C; box-shadow:0 0 8px rgba(255,92,108,0.8); flex-shrink:0;
+    animation:liveDotPulse 1.4s ease-in-out infinite;}
+  @keyframes liveDotPulse{0%,100%{opacity:1; transform:scale(1);}50%{opacity:0.4; transform:scale(0.8);}}
 
   /* ---------- SECTIONS ---------- */
   .section{padding:70px 0;}
@@ -323,6 +348,7 @@
   <canvas id="neural"></canvas>
 </div>
 <div class="balloon-layer" id="balloonLayer"></div>
+<div class="scan-sweep"></div>
 <div class="vignette"></div>
 <div class="spotlight"></div>
 <div class="celebrate-btn-wrap"><button class="celebrate-btn" id="celebrateBtn" type="button">🎉 Celebrate</button></div>
@@ -339,7 +365,7 @@
     </div>
     <div class="journal-title">The Annals of Ranjita Kumari</div>
     <h1>A Longitudinal Study of
-      <span class="rk grad-text">Dr. Ranjita Kumari</span>
+      <span class="rk grad-text" id="scrambleName">Dr. Ranjita Kumari</span>
     </h1>
     <p class="sub-role">Neuroscientist, mother, and unofficial head of every family operation ever run.</p>
 
@@ -365,6 +391,18 @@
   </div>
 </header>
 
+<!-- TICKER -->
+<div class="ticker-wrap" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item">BREAKING: Subject's cooking still unmatched by any peer-reviewed recipe</span>
+    <span class="ticker-item">STUDY UPDATE: Sample size of people who love her, everyone she's ever met</span>
+    <span class="ticker-item">FUNDING RENEWED: Emotional support grant extended indefinitely</span>
+    <span class="ticker-item">PEER REVIEW: Still the calmest reviewer in the family</span>
+    <span class="ticker-item">CITATION ALERT: Referenced in every sentence starting with "my mom always says"</span>
+    <span class="ticker-item">ERRATA: None. There has never once been a correction needed</span>
+  </div>
+</div>
+
 <!-- METRICS -->
 <section class="metrics reveal">
   <div class="wrap">
@@ -384,6 +422,7 @@
       <span class="tag">Co-author: Aadya</span>
       <span class="tag joke">Reviewer 2: also Aashna, and she has notes</span>
     </div>
+    <div class="live-stat"><span class="live-dot"></span> Live tally, acts of love recorded today: <b id="liveNum">48,213</b></div>
   </div>
 </section>
 
@@ -1199,6 +1238,45 @@
     setTimeout(()=>spawnRing(w*0.5, h*0.25), 700);
     showToast('🎉 Confetti!');
   });
+
+  /* ---------- SCRAMBLE / DECODE HERO NAME ---------- */
+  const scrambleEl = document.getElementById('scrambleName');
+  if(scrambleEl){
+    const finalText = scrambleEl.textContent;
+    if(reduce){
+      scrambleEl.textContent = finalText;
+    } else {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+      const len = finalText.length;
+      const totalFrames = 32;
+      let frame = 0;
+      (function tick(){
+        frame++;
+        const revealCount = Math.floor((frame/totalFrames)*len);
+        let out='';
+        for(let i=0;i<len;i++){
+          const ch = finalText[i];
+          out += (ch===' '||i<revealCount) ? ch : chars[Math.floor(Math.random()*chars.length)];
+        }
+        scrambleEl.textContent = out;
+        if(frame<totalFrames){ requestAnimationFrame(tick); } else { scrambleEl.textContent = finalText; }
+      })();
+    }
+  }
+
+  /* ---------- INFINITE TICKER ---------- */
+  const tickerTrack = document.getElementById('tickerTrack');
+  if(tickerTrack) tickerTrack.innerHTML += tickerTrack.innerHTML;
+
+  /* ---------- LIVE COUNTER ---------- */
+  const liveNum = document.getElementById('liveNum');
+  if(liveNum && !reduce){
+    let liveCount = 48213;
+    setInterval(()=>{
+      liveCount += Math.floor(Math.random()*3)+1;
+      liveNum.textContent = liveCount.toLocaleString();
+    }, 850);
+  }
 })();
 </script>
 </body>
