@@ -141,6 +141,13 @@
     opacity:0; transition:opacity .3s ease;}
   .card:hover .expand{opacity:1;}
   .card .expand svg{width:15px; height:15px; stroke:var(--paper); fill:none; stroke-width:2;}
+  .card .cite-btn{position:absolute; bottom:12px; right:12px; font-family:'IBM Plex Mono',monospace; font-size:10px;
+    background:rgba(7,11,24,0.82); color:var(--amber); padding:5px 10px; border-radius:6px; letter-spacing:0.04em; z-index:2;
+    opacity:0; transition:opacity .3s ease, transform .2s ease, color .2s ease, border-color .2s ease;
+    border:1px solid rgba(255,196,107,0.35); cursor:pointer;}
+  .card:hover .cite-btn{opacity:1;}
+  .card .cite-btn:hover{transform:translateY(-1px); background:rgba(7,11,24,0.95);}
+  .card .cite-btn.copied{color:var(--cyan); border-color:rgba(79,227,208,0.5);}
   .card .body{padding:18px 20px 22px;}
   .card .meta{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#B8264C; text-transform:uppercase;
     letter-spacing:0.08em; margin-bottom:8px;}
@@ -181,7 +188,8 @@
   .stamp{position:absolute; top:-22px; right:24px; width:132px; height:132px; border:3px solid var(--magenta);
     border-radius:50%; display:flex; align-items:center; justify-content:center; transform:rotate(-13deg);
     font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.05em; color:var(--magenta);
-    text-align:center; text-transform:uppercase; padding:12px; background:rgba(255,92,138,0.06); backdrop-filter:blur(2px);}
+    text-align:center; text-transform:uppercase; padding:12px; background:rgba(255,92,138,0.06); backdrop-filter:blur(2px);
+    cursor:pointer; transition:transform .3s cubic-bezier(.2,.7,.2,1); user-select:none;}
 
   /* ---------- FINALE ---------- */
   .finale{padding:84px 0 100px; text-align:center;}
@@ -224,6 +232,29 @@
   #lightbox .lb-prev{left:20px;} #lightbox .lb-next{right:20px;}
 
   #confetti-canvas{position:fixed; inset:0; pointer-events:none; z-index:55;}
+
+  /* ---------- TOAST ---------- */
+  .toast{position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); z-index:70;
+    background:rgba(10,14,28,0.94); border:1px solid var(--rule); color:var(--text); font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px; letter-spacing:0.04em; padding:11px 20px; border-radius:30px; opacity:0; pointer-events:none;
+    transition:opacity .35s ease, transform .35s ease; box-shadow:0 12px 30px rgba(0,0,0,0.4); white-space:nowrap;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- EASTER EGG OVERLAY ---------- */
+  #easterEgg{position:fixed; inset:0; z-index:65; background:rgba(4,6,14,0.92); backdrop-filter:blur(10px);
+    display:none; align-items:center; justify-content:center; padding:24px; opacity:0; transition:opacity .35s ease;}
+  #easterEgg.open{display:flex; opacity:1;}
+  .ee-box{position:relative; max-width:480px; padding:40px 36px; border-radius:18px;
+    background:linear-gradient(180deg, rgba(251,246,236,0.08), rgba(251,246,236,0.03));
+    border:1px solid var(--rule); border-left:2px solid var(--magenta); backdrop-filter:blur(6px); text-align:left;
+    transform:scale(0.92) translateY(10px); transition:transform .35s cubic-bezier(.2,.7,.2,1);}
+  #easterEgg.open .ee-box{transform:scale(1) translateY(0);}
+  .ee-eyebrow{display:block; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em;
+    text-transform:uppercase; color:var(--magenta); margin-bottom:14px;}
+  .ee-box p{font-family:'Fraunces',serif; font-style:italic; font-size:18px; line-height:1.7; color:var(--text); margin:0;}
+  .ee-close{position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:50%;
+    border:1px solid var(--rule); background:rgba(255,255,255,0.05); color:#fff; font-size:16px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;}
 
   @media (max-width:720px){
     .grid{grid-template-columns:1fr;}
@@ -409,7 +440,7 @@
       <h2>The Part We Actually Mean Most</h2>
     </div>
     <div class="ack-box reveal">
-      <div class="stamp">Accepted<br>No Revisions<br>Requested</div>
+      <div class="stamp" id="stamp">Accepted<br>No Revisions<br>Requested</div>
       <p>This entire body of work has exactly one funding source, and it's you. Every good thing in this dataset: every festival, every flight taken just to be there, every photo where you somehow still show up smiling after doing everything for everyone else first, all of it has your fingerprints on it.</p>
       <p>Thank you for being the calmest peer reviewer either of us will ever have, for asking about our lives before your own even on your own birthday, and for turning every ordinary Tuesday into something that felt like home. None of this gets cited enough. All of it is credited to you.</p>
       <p>We love you more than any h-index could ever measure.</p>
@@ -468,6 +499,18 @@
 </div><!-- /content -->
 
 <canvas id="confetti-canvas"></canvas>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- EASTER EGG -->
+<div id="easterEgg">
+  <div class="ee-box">
+    <button class="ee-close" aria-label="Close">✕</button>
+    <span class="ee-eyebrow">Hidden Finding · p &lt; 0.0001</span>
+    <p id="eeMsg"></p>
+  </div>
+</div>
 
 <!-- LIGHTBOX -->
 <div id="lightbox">
@@ -794,6 +837,94 @@
     });
   }
 
+  /* ---------- MAGNETIC TAG PILLS ---------- */
+  if(fine && !reduce){
+    document.querySelectorAll('.tag').forEach(tag=>{
+      tag.addEventListener('mousemove', e=>{
+        const r=tag.getBoundingClientRect();
+        const mx=e.clientX-(r.left+r.width/2);
+        const my=e.clientY-(r.top+r.height/2);
+        tag.style.transform=`translate(${mx*0.22}px, ${my*0.4}px)`;
+      });
+      tag.addEventListener('mouseleave', ()=>{ tag.style.transform=''; });
+    });
+  }
+
+  /* ---------- CITE THIS FIGURE ---------- */
+  const toast = document.getElementById('toast');
+  let toastTimer;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>toast.classList.remove('show'), 2200);
+  }
+  document.querySelectorAll('.card').forEach(card=>{
+    const imgwrap = card.querySelector('.imgwrap');
+    const figTag = card.querySelector('.fig-tag');
+    if(!imgwrap || !figTag) return;
+    const btn = document.createElement('span');
+    btn.className = 'cite-btn';
+    btn.textContent = 'Cite this';
+    imgwrap.appendChild(btn);
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const title = card.querySelector('h3')?.textContent.trim() || card.dataset.cap || '';
+      const meta = card.querySelector('.meta')?.textContent.trim() || '';
+      const citation = `Kumari Family Archive (2026). ${figTag.textContent}: "${title}." ${meta} The Annals of Ranjita Kumari, Vol. XXVII.`;
+      navigator.clipboard?.writeText(citation).then(()=>{
+        btn.classList.add('copied');
+        showToast('Citation copied to clipboard');
+        setTimeout(()=>btn.classList.remove('copied'), 1500);
+      }).catch(()=>{ showToast('Could not copy citation'); });
+    });
+  });
+
+  /* ---------- REVIEWER #2 EASTER EGG (click the stamp) ---------- */
+  const stamp = document.getElementById('stamp');
+  if(stamp){
+    const stampMessages = [
+      'Accepted<br>No Revisions<br>Requested',
+      'Reviewer 2:<br>Too Wholesome.<br>Accept Anyway',
+      'Reviewer 2:<br>Needs More<br>Cake (Approved)',
+      'Reviewer 2:<br>Best Mom,<br>Confirmed'
+    ];
+    let stampIndex = 0;
+    stamp.addEventListener('click', ()=>{
+      stampIndex = (stampIndex + 1) % stampMessages.length;
+      stamp.style.transform = 'rotate(-13deg) scale(0.85)';
+      setTimeout(()=>{
+        stamp.innerHTML = stampMessages[stampIndex];
+        stamp.style.transform = 'rotate(-13deg) scale(1.12)';
+        setTimeout(()=>{ stamp.style.transform = 'rotate(-13deg) scale(1)'; }, 180);
+      }, 140);
+    });
+  }
+
+  /* ---------- TYPE "MOM" EASTER EGG ---------- */
+  const eeOverlay = document.getElementById('easterEgg');
+  const eeMsg = document.getElementById('eeMsg');
+  const eeMessages = [
+    "Hidden finding (p < 0.0001): no matter how many studies we run, the result never changes. You're the best mom in every single one.",
+    "Supplementary note: this site has a 100% approval rating from everyone who's ever met you. Sample size: literally everyone.",
+    "Unpublished data: we typed your name into a search box just to make this pop up. That's how much we love you."
+  ];
+  let typeBuffer = '';
+  window.addEventListener('keydown', e=>{
+    if(e.key.length !== 1) return;
+    typeBuffer = (typeBuffer + e.key).slice(-3).toUpperCase();
+    if(typeBuffer === 'MOM'){
+      typeBuffer = '';
+      eeMsg.textContent = eeMessages[Math.floor(Math.random()*eeMessages.length)];
+      eeOverlay.classList.add('open');
+      easterBurst();
+    }
+  });
+  function closeEe(){ eeOverlay.classList.remove('open'); }
+  eeOverlay.querySelector('.ee-close').addEventListener('click', closeEe);
+  eeOverlay.addEventListener('click', e=>{ if(e.target===eeOverlay) closeEe(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeEe(); });
+
   /* ---------- LIGHTBOX ---------- */
   const cards = Array.from(document.querySelectorAll('.card'));
   const lb = document.getElementById('lightbox');
@@ -832,20 +963,27 @@
     });
   }
 
-  /* ---------- CANDLES + FIREWORKS ---------- */
+  /* ---------- CANDLES + FIREWORKS (with encore) ---------- */
   const cakeWrap=document.getElementById('cakeWrap');
   const wishText=document.getElementById('wishText');
   const instructionText=document.getElementById('instructionText');
   let blown=false;
   function blowOut(){
-    if(blown) return; blown=true;
+    blown=true;
     cakeWrap.classList.add('blown');
     wishText.classList.add('show');
-    instructionText.style.opacity='0';
+    instructionText.textContent='Tap the candles again for an encore';
     celebrate();
   }
-  cakeWrap.addEventListener('click', blowOut);
-  cakeWrap.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); blowOut(); } });
+  function relight(){
+    blown=false;
+    cakeWrap.classList.remove('blown');
+    wishText.classList.remove('show');
+    instructionText.textContent='Click, tap, or press Enter on the candles';
+  }
+  function toggleCake(){ blown ? relight() : blowOut(); }
+  cakeWrap.addEventListener('click', toggleCake);
+  cakeWrap.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleCake(); } });
 
   const cc=document.getElementById('confetti-canvas');
   const cctx=cc.getContext('2d');
@@ -853,49 +991,56 @@
   ccResize(); window.addEventListener('resize', ccResize);
   const palette=['#FF5C8A','#FFC46B','#4FE3D0','#A98BFF','#FBF6EC'];
 
-  function celebrate(){
-    const parts=[];
-    const cx=window.innerWidth/2;
-    const cy=cakeWrap.getBoundingClientRect().top + window.scrollY - window.scrollY + 120;
-    // confetti burst
-    for(let i=0;i<170;i++){
-      parts.push({x:cx+(Math.random()-0.5)*60, y:cy, vx:(Math.random()-0.5)*11, vy:-Math.random()*12-4,
+  let confettiParts=[], confettiRunning=false;
+  function spawnConfetti(cx,cy,count){
+    for(let i=0;i<count;i++){
+      confettiParts.push({x:cx+(Math.random()-0.5)*60, y:cy, vx:(Math.random()-0.5)*11, vy:-Math.random()*12-4,
         s:Math.random()*6+4, c:palette[i%palette.length], rot:Math.random()*360, vr:(Math.random()-0.5)*14, life:0, type:'c'});
     }
-    // firework rings
-    function ring(fx,fy){
-      const col=palette[Math.floor(Math.random()*palette.length)];
-      for(let k=0;k<38;k++){
-        const ang=(k/38)*Math.PI*2; const sp=Math.random()*4+3;
-        parts.push({x:fx,y:fy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,s:Math.random()*3+2,c:col,rot:0,vr:0,life:0,type:'f'});
-      }
+    ensureConfettiLoop();
+  }
+  function spawnRing(fx,fy){
+    const col=palette[Math.floor(Math.random()*palette.length)];
+    for(let k=0;k<38;k++){
+      const ang=(k/38)*Math.PI*2; const sp=Math.random()*4+3;
+      confettiParts.push({x:fx,y:fy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,s:Math.random()*3+2,c:col,rot:0,vr:0,life:0,type:'f'});
     }
-    setTimeout(()=>ring(window.innerWidth*0.3, window.innerHeight*0.32),150);
-    setTimeout(()=>ring(window.innerWidth*0.7, window.innerHeight*0.28),450);
-    setTimeout(()=>ring(window.innerWidth*0.5, window.innerHeight*0.22),780);
-
-    let frame=0;
+    ensureConfettiLoop();
+  }
+  function ensureConfettiLoop(){
+    if(confettiRunning) return;
+    confettiRunning=true;
     function tick(){
       cctx.clearRect(0,0,cc.width,cc.height);
-      frame++;
-      let alive=false;
-      for(const p of parts){
+      for(let i=confettiParts.length-1;i>=0;i--){
+        const p=confettiParts[i];
         if(p.type==='f'){ p.vy+=0.06; p.vx*=0.98; p.vy*=0.98; } else { p.vy+=0.3; }
         p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life++;
         const fade=p.type==='f'?Math.max(0,1-p.life/70):Math.max(0,1-p.life/170);
-        if(fade>0 && p.y<cc.height+40){
-          alive=true;
-          cctx.save(); cctx.globalAlpha=fade; cctx.translate(p.x,p.y); cctx.rotate(p.rot*Math.PI/180);
-          cctx.fillStyle=p.c;
-          if(p.type==='f'){ cctx.beginPath(); cctx.arc(0,0,p.s,0,Math.PI*2); cctx.fill(); }
-          else { cctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.62); }
-          cctx.restore();
-        }
+        if(fade<=0 || p.y>cc.height+40){ confettiParts.splice(i,1); continue; }
+        cctx.save(); cctx.globalAlpha=fade; cctx.translate(p.x,p.y); cctx.rotate(p.rot*Math.PI/180);
+        cctx.fillStyle=p.c;
+        if(p.type==='f'){ cctx.beginPath(); cctx.arc(0,0,p.s,0,Math.PI*2); cctx.fill(); }
+        else { cctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.62); }
+        cctx.restore();
       }
-      if(alive && frame<260) requestAnimationFrame(tick);
-      else cctx.clearRect(0,0,cc.width,cc.height);
+      if(confettiParts.length){ requestAnimationFrame(tick); }
+      else { confettiRunning=false; cctx.clearRect(0,0,cc.width,cc.height); }
     }
-    tick();
+    requestAnimationFrame(tick);
+  }
+
+  function celebrate(){
+    const cx=window.innerWidth/2;
+    const cy=cakeWrap.getBoundingClientRect().top + 120;
+    spawnConfetti(cx, cy, 170);
+    setTimeout(()=>spawnRing(window.innerWidth*0.3, window.innerHeight*0.32),150);
+    setTimeout(()=>spawnRing(window.innerWidth*0.7, window.innerHeight*0.28),450);
+    setTimeout(()=>spawnRing(window.innerWidth*0.5, window.innerHeight*0.22),780);
+  }
+  function easterBurst(){
+    spawnConfetti(window.innerWidth/2, window.innerHeight*0.38, 150);
+    setTimeout(()=>spawnRing(window.innerWidth*0.5, window.innerHeight*0.3),200);
   }
 })();
 </script>
