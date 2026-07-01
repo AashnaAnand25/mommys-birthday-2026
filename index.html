@@ -72,6 +72,8 @@
     font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:var(--text-faint);
     padding-bottom:16px; margin-bottom:22px; border-bottom:1px solid var(--rule); text-transform:uppercase;}
   .nameplate b{color:var(--text); font-weight:600;}
+  .doi-copy{cursor:pointer; transition:color .2s ease;}
+  .doi-copy:hover{color:var(--cyan);}
   .journal-title{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.22em; text-transform:uppercase;
     color:var(--magenta); margin-bottom:18px;}
   .hero h1{font-size:clamp(32px,6.4vw,58px); line-height:1.08; letter-spacing:-0.015em; max-width:14ch;}
@@ -80,7 +82,7 @@
     font-size:clamp(17px,2.6vw,22px); max-width:44ch; margin-top:10px;}
 
   /* EEG line */
-  .eeg{margin:30px 0 4px; width:100%; max-width:520px; height:54px; overflow:visible;}
+  .eeg{margin:30px 0 4px; width:100%; max-width:520px; height:54px; overflow:visible; cursor:pointer;}
   .eeg path{fill:none; stroke:url(#eeggrad); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;
     stroke-dasharray:1400; stroke-dashoffset:1400; filter:drop-shadow(0 0 6px rgba(79,227,208,0.55));}
   .reveal .eeg path{animation:draw 2.4s ease forwards 0.3s;}
@@ -106,7 +108,8 @@
   /* ---------- METRICS ---------- */
   .metrics{padding:44px 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); margin-top:36px;}
   .metrics-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px;}
-  .metric{padding:14px 6px; position:relative;}
+  .metric{padding:14px 6px; position:relative; cursor:pointer; transition:transform .2s ease;}
+  .metric:hover{transform:translateY(-2px);}
   .metric .num{font-family:'Fraunces',serif; font-size:clamp(30px,5vw,46px); font-weight:600; line-height:1; display:block;}
   .metric .lbl{font-size:12.5px; color:var(--text-faint); margin-top:10px; display:block; line-height:1.4;}
   .fields{margin-top:26px; font-size:13.5px; color:var(--text-faint); line-height:1.8;}
@@ -158,7 +161,8 @@
   .scanner{border-radius:18px; padding:16px; background:linear-gradient(180deg,#0E1428,#0A0F20);
     border:1px solid var(--rule); box-shadow:0 24px 70px rgba(0,0,0,0.5);}
   .scanner .bar{display:flex; align-items:center; gap:8px; padding:2px 6px 12px;}
-  .scanner .bar .led{width:9px; height:9px; border-radius:50%;}
+  .scanner .bar .led{width:9px; height:9px; border-radius:50%; cursor:pointer; transition:transform .2s ease;}
+  .scanner .bar .led:hover{transform:scale(1.3);}
   .scanner .bar .led.r{background:#FF5C6C;} .scanner .bar .led.y{background:#FFC46B;} .scanner .bar .led.g{background:#4FE3D0;}
   .scanner .bar span{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-faint); letter-spacing:0.08em;}
   .video-frame{position:relative; width:100%; padding-top:56.25%; border-radius:10px; overflow:hidden; background:#000;}
@@ -211,6 +215,23 @@
     max-width:26ch; margin-left:auto; margin-right:auto; opacity:0; transform:translateY(10px);
     transition:opacity .7s ease, transform .7s ease;}
   .wish-text.show{opacity:1; transform:translateY(0);}
+
+  .wish-input-wrap{margin-top:28px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    opacity:0; transform:translateY(10px); transition:opacity .6s ease .1s, transform .6s ease .1s; pointer-events:none;}
+  .wish-input-wrap.show{opacity:1; transform:translateY(0); pointer-events:auto;}
+  .wish-input{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--text); background:rgba(255,255,255,0.04);
+    border:1px solid var(--rule); border-radius:30px; padding:11px 18px; width:min(320px,72vw); outline:none;
+    transition:border-color .25s ease;}
+  .wish-input:focus{border-color:var(--cyan);}
+  .wish-input::placeholder{color:var(--text-faint);}
+  .wish-submit{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.04em; color:#0B1226;
+    background:var(--grad); border:none; border-radius:30px; padding:11px 22px; cursor:pointer; font-weight:600;
+    transition:transform .2s ease;}
+  .wish-submit:hover{transform:translateY(-2px);}
+  .wish-granted{margin-top:22px; font-family:'Fraunces',serif; font-style:italic; font-size:clamp(17px,2.6vw,21px);
+    max-width:32ch; margin-left:auto; margin-right:auto; opacity:0; transform:translateY(8px);
+    transition:opacity .6s ease, transform .6s ease;}
+  .wish-granted.show{opacity:1; transform:translateY(0);}
 
   footer{text-align:center; padding:34px 0 46px; font-family:'IBM Plex Mono',monospace; font-size:11px;
     color:var(--text-faint); letter-spacing:0.05em; border-top:1px solid var(--rule);}
@@ -287,7 +308,7 @@
   <div class="wrap">
     <div class="nameplate">
       <span>Vol. <b>XXVII</b> · Birthday Edition</span>
-      <span>DOI: <b>10.26/RK.LOVE</b></span>
+      <span class="doi-copy" id="doiCopy" title="Click to copy">DOI: <b>10.26/RK.LOVE</b></span>
       <span>Peer-Reviewed <b>Since Day One</b></span>
     </div>
     <div class="journal-title">The Annals of Ranjita Kumari</div>
@@ -322,10 +343,10 @@
 <section class="metrics reveal">
   <div class="wrap">
     <div class="metrics-grid">
-      <div class="metric"><span class="num grad-text" data-count="inf">∞</span><span class="lbl">Citations (times we've bragged about you)</span></div>
-      <div class="metric"><span class="num grad-text" data-count="2">0</span><span class="lbl">h-index (daughters raised, both functional)</span></div>
-      <div class="metric"><span class="num grad-text" data-count="100" data-suffix="%">0</span><span class="lbl">i10-index (birthdays you made feel like ours too)</span></div>
-      <div class="metric"><span class="num grad-text" data-count="0">0</span><span class="lbl">Retractions on record, ever</span></div>
+      <div class="metric" data-note="Every relative who's ever seen her diplomas, unprompted."><span class="num grad-text" data-count="inf">∞</span><span class="lbl">Citations (times we've bragged about you)</span></div>
+      <div class="metric" data-note="Both come back for the holidays. That's the real metric."><span class="num grad-text" data-count="2">0</span><span class="lbl">h-index (daughters raised, both functional)</span></div>
+      <div class="metric" data-note="Measured across every birthday since 1998, no exceptions."><span class="num grad-text" data-count="100" data-suffix="%">0</span><span class="lbl">i10-index (birthdays you made feel like ours too)</span></div>
+      <div class="metric" data-note="Not even that one wedding speech."><span class="num grad-text" data-count="0">0</span><span class="lbl">Retractions on record, ever</span></div>
     </div>
     <div class="fields">
       <b>Verified fields:</b> Neuroscience · Neuroimaging · Functional MRI · Clinical Psychology<br>
@@ -489,6 +510,11 @@
     </div>
     <div class="instruction" id="instructionText">Click, tap, or press Enter on the candles</div>
     <div class="wish-text grad-text" id="wishText">Wish logged. Peer review: accepted. Happy Birthday, Mommy. Here's to the next volume. 🎂</div>
+    <div class="wish-input-wrap" id="wishInputWrap">
+      <input type="text" id="wishInput" class="wish-input" placeholder="Type a real wish for the next year..." maxlength="140">
+      <button id="wishSubmit" class="wish-submit" type="button">Grant it ✨</button>
+    </div>
+    <div class="wish-granted grad-text" id="wishGranted"></div>
   </div>
 </section>
 
@@ -880,6 +906,39 @@
     });
   });
 
+  /* ---------- CLICK-TO-COPY DOI ---------- */
+  const doiCopy = document.getElementById('doiCopy');
+  if(doiCopy){
+    doiCopy.addEventListener('click', ()=>{
+      navigator.clipboard?.writeText('10.26/RK.LOVE').then(()=>{
+        showToast('DOI copied, go ahead and cite her');
+      }).catch(()=>{ showToast('Could not copy DOI'); });
+    });
+  }
+
+  /* ---------- METRIC FOOTNOTES ---------- */
+  document.querySelectorAll('.metric[data-note]').forEach(metric=>{
+    metric.addEventListener('click', ()=>{ showToast(metric.dataset.note); });
+  });
+
+  /* ---------- EEG CLICK-TO-REPLAY ---------- */
+  const eeg = document.querySelector('.eeg');
+  const eegPath = eeg?.querySelector('path');
+  if(eeg && eegPath && !reduce){
+    eeg.addEventListener('click', ()=>{
+      eegPath.style.animation = 'none';
+      void eegPath.offsetWidth;
+      eegPath.style.animation = 'draw 1.5s ease forwards';
+    });
+  }
+
+  /* ---------- SCANNER LED JOKES ---------- */
+  const ledMessages = { r: 'Recording status: always, since day one.', y: 'Warning: extreme cuteness ahead.', g: 'All systems go. Play whenever you\'re ready.' };
+  document.querySelectorAll('.scanner .bar .led').forEach(led=>{
+    const key = led.classList.contains('r') ? 'r' : led.classList.contains('y') ? 'y' : 'g';
+    led.addEventListener('click', ()=>{ showToast(ledMessages[key]); });
+  });
+
   /* ---------- REVIEWER #2 EASTER EGG (click the stamp) ---------- */
   const stamp = document.getElementById('stamp');
   if(stamp){
@@ -967,12 +1026,16 @@
   const cakeWrap=document.getElementById('cakeWrap');
   const wishText=document.getElementById('wishText');
   const instructionText=document.getElementById('instructionText');
+  const wishInputWrap=document.getElementById('wishInputWrap');
+  const wishInput=document.getElementById('wishInput');
+  const wishGranted=document.getElementById('wishGranted');
   let blown=false;
   function blowOut(){
     blown=true;
     cakeWrap.classList.add('blown');
     wishText.classList.add('show');
     instructionText.textContent='Tap the candles again for an encore';
+    wishInputWrap.classList.add('show');
     celebrate();
   }
   function relight(){
@@ -980,7 +1043,21 @@
     cakeWrap.classList.remove('blown');
     wishText.classList.remove('show');
     instructionText.textContent='Click, tap, or press Enter on the candles';
+    wishInputWrap.classList.remove('show');
+    wishGranted.classList.remove('show');
+    wishInput.value='';
   }
+  function grantWish(){
+    const val=wishInput.value.trim();
+    if(!val) return;
+    wishGranted.textContent=`Wish granted: "${val}" — filed under Findings, Volume XXVII.`;
+    wishGranted.classList.add('show');
+    wishInput.value='';
+    const r=wishInputWrap.getBoundingClientRect();
+    spawnRing(r.left+r.width/2, r.top+10);
+  }
+  document.getElementById('wishSubmit').addEventListener('click', grantWish);
+  wishInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); grantWish(); } });
   function toggleCake(){ blown ? relight() : blowOut(); }
   cakeWrap.addEventListener('click', toggleCake);
   cakeWrap.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleCake(); } });
