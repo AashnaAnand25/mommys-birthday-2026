@@ -254,6 +254,30 @@
 
   #confetti-canvas{position:fixed; inset:0; pointer-events:none; z-index:55;}
 
+  /* ---------- FLOATING BALLOONS ---------- */
+  .balloon-layer{position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden;}
+  .balloon{position:absolute; bottom:-160px; width:56px; height:92px; cursor:pointer; pointer-events:auto;
+    filter:drop-shadow(0 10px 16px rgba(0,0,0,0.4)); animation:balloonRise linear forwards;}
+  .balloon svg{width:100%; height:100%; display:block;}
+  @keyframes balloonRise{
+    0%{transform:translate(0,0) rotate(-4deg);}
+    25%{transform:translate(22px,-28vh) rotate(4deg);}
+    50%{transform:translate(-16px,-55vh) rotate(-3deg);}
+    75%{transform:translate(20px,-82vh) rotate(3deg);}
+    100%{transform:translate(0,-122vh) rotate(-2deg);}
+  }
+
+  /* ---------- CELEBRATE BUTTON ---------- */
+  .celebrate-btn-wrap{position:fixed; bottom:26px; right:26px; z-index:50; animation:celebrateFloat 3.6s ease-in-out infinite;}
+  .celebrate-btn{display:block; font-family:'IBM Plex Mono',monospace; font-size:13px; letter-spacing:0.03em;
+    color:#0B1226; background:var(--grad); background-size:220% 220%; border:none; border-radius:30px;
+    padding:13px 22px; cursor:pointer; font-weight:600; box-shadow:0 14px 34px rgba(0,0,0,0.45);
+    animation:gradFlow 6s ease-in-out infinite; transition:transform .2s ease;}
+  .celebrate-btn:hover{transform:scale(1.07);}
+  .celebrate-btn:active{transform:scale(0.95);}
+  @keyframes celebrateFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+  @media (max-width:720px){ .celebrate-btn-wrap{bottom:18px; right:18px;} .celebrate-btn{padding:11px 17px; font-size:12px;} }
+
   /* ---------- TOAST ---------- */
   .toast{position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); z-index:70;
     background:rgba(10,14,28,0.94); border:1px solid var(--rule); color:var(--text); font-family:'IBM Plex Mono',monospace;
@@ -298,8 +322,10 @@
   <canvas id="flow"></canvas>
   <canvas id="neural"></canvas>
 </div>
+<div class="balloon-layer" id="balloonLayer"></div>
 <div class="vignette"></div>
 <div class="spotlight"></div>
+<div class="celebrate-btn-wrap"><button class="celebrate-btn" id="celebrateBtn" type="button">🎉 Celebrate</button></div>
 
 <div class="content">
 
@@ -1119,6 +1145,60 @@
     spawnConfetti(window.innerWidth/2, window.innerHeight*0.38, 150);
     setTimeout(()=>spawnRing(window.innerWidth*0.5, window.innerHeight*0.3),200);
   }
+
+  /* ---------- FLOATING BALLOONS ---------- */
+  const balloonLayer = document.getElementById('balloonLayer');
+  const balloonColors = ['#FF5C8A','#4FE3D0','#A98BFF','#FFC46B'];
+  const MAX_BALLOONS = reduce ? 0 : 5;
+  function makeBalloon(delay){
+    setTimeout(()=>{
+      const b = document.createElement('div');
+      b.className = 'balloon';
+      const col = balloonColors[Math.floor(Math.random()*balloonColors.length)];
+      b.style.left = (Math.random()*86+2) + 'vw';
+      b.style.animationDuration = (17 + Math.random()*9) + 's';
+      b.innerHTML = `<svg viewBox="0 0 56 92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <line x1="28" y1="70" x2="28" y2="92" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+        <ellipse cx="28" cy="38" rx="28" ry="35" fill="${col}"/>
+        <ellipse cx="18" cy="24" rx="8" ry="12" fill="rgba(255,255,255,0.28)"/>
+        <path d="M23 70 L28 79 L33 70 Z" fill="${col}"/>
+      </svg>`;
+      b.addEventListener('click', ()=>popBalloon(b));
+      b.addEventListener('animationend', ()=>{ b.remove(); makeBalloon(0); });
+      balloonLayer.appendChild(b);
+    }, delay);
+  }
+  function popBalloon(b){
+    if(b.dataset.popped) return;
+    b.dataset.popped = '1';
+    const r = b.getBoundingClientRect();
+    const cs = getComputedStyle(b).transform;
+    b.style.animation = 'none';
+    b.style.transform = cs;
+    requestAnimationFrame(()=>{
+      b.style.transition = 'transform .22s ease, opacity .22s ease';
+      b.style.transform = cs + ' scale(1.5)';
+      b.style.opacity = '0';
+    });
+    spawnRing(r.left + r.width/2, r.top + r.height/2);
+    setTimeout(()=>{ b.remove(); makeBalloon(400 + Math.random()*800); }, 240);
+  }
+  if(!reduce){
+    for(let i=0;i<MAX_BALLOONS;i++) makeBalloon(i*2600 + Math.random()*1200);
+  }
+
+  /* ---------- CELEBRATE BUTTON ---------- */
+  const celebrateBtn = document.getElementById('celebrateBtn');
+  celebrateBtn.addEventListener('click', ()=>{
+    const w = window.innerWidth, h = window.innerHeight;
+    spawnConfetti(w*0.2, h, 60);
+    spawnConfetti(w*0.5, h, 70);
+    spawnConfetti(w*0.8, h, 60);
+    setTimeout(()=>spawnRing(w*0.3, h*0.35), 200);
+    setTimeout(()=>spawnRing(w*0.7, h*0.3), 450);
+    setTimeout(()=>spawnRing(w*0.5, h*0.25), 700);
+    showToast('🎉 Confetti!');
+  });
 })();
 </script>
 </body>
