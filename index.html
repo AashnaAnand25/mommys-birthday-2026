@@ -42,18 +42,9 @@
   img{max-width:100%;}
 
   /* ---------- BACKGROUND LAYERS ---------- */
-  #flow{position:fixed; inset:0; z-index:0; display:block;}
+  #bgfx{position:fixed; inset:0; z-index:0; filter:hue-rotate(var(--hue,0deg)); transition:filter .9s linear;}
+  #flow{position:fixed; inset:0; z-index:0; display:block; filter:blur(58px) saturate(1.8) brightness(1.18);}
   #neural{position:fixed; inset:0; z-index:0; display:block;}
-  .aurora{position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;}
-  .blob{position:absolute; border-radius:50%; filter:blur(90px); opacity:0.5; mix-blend-mode:screen;}
-  .blob.a{width:52vw; height:52vw; left:-12vw; top:-10vw; background:radial-gradient(circle,#33236E,transparent 68%); animation:drift1 26s ease-in-out infinite;}
-  .blob.b{width:46vw; height:46vw; right:-10vw; top:18vh; background:radial-gradient(circle,#0F5A57,transparent 68%); animation:drift2 32s ease-in-out infinite;}
-  .blob.c{width:40vw; height:40vw; left:22vw; bottom:-14vw; background:radial-gradient(circle,#5A1A41,transparent 68%); animation:drift3 30s ease-in-out infinite;}
-  .blob.d{width:34vw; height:34vw; right:12vw; bottom:6vh; background:radial-gradient(circle,#6B4A12,transparent 70%); opacity:0.38; animation:drift4 38s ease-in-out infinite;}
-  @keyframes drift1{50%{transform:translate(8vw,6vh) scale(1.1);}}
-  @keyframes drift2{50%{transform:translate(-7vw,-5vh) scale(1.08);}}
-  @keyframes drift3{50%{transform:translate(5vw,-7vh) scale(1.12);}}
-  @keyframes drift4{50%{transform:translate(-6vw,4vh) scale(1.14);}}
 
   .vignette{position:fixed; inset:0; z-index:1; pointer-events:none;
     background:radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(4,6,14,0.75) 100%);}
@@ -251,9 +242,10 @@
 <body>
 
 <div id="progress"></div>
-<div class="aurora"><span class="blob a"></span><span class="blob b"></span><span class="blob c"></span><span class="blob d"></span></div>
-<canvas id="flow"></canvas>
-<canvas id="neural"></canvas>
+<div id="bgfx">
+  <canvas id="flow"></canvas>
+  <canvas id="neural"></canvas>
+</div>
 <div class="vignette"></div>
 <div class="spotlight"></div>
 
@@ -493,7 +485,7 @@
   /* ---------- NEURAL NETWORK BACKGROUND ---------- */
   const canvas = document.getElementById('neural');
   const ctx = canvas.getContext('2d');
-  let W, H, DPR, nodes = [], pulses = [], dust = [];
+  let W, H, DPR, nodes = [], pulses = [], dust = [], trail = [], sparks = [];
   const mouse = {x:-9999, y:-9999};
 
   function resize(){
@@ -634,91 +626,127 @@
       ctx.fillStyle=base+'0.22)';
       ctx.arc(x,y,7,0,Math.PI*2); ctx.fill();
     }
+    // cursor comet trail
+    for(let i=trail.length-1;i>=0;i--){
+      const t=trail[i];
+      t.life++; t.x+=t.vx; t.y+=t.vy; t.vy+=0.012;
+      if(t.life>=t.maxLife){ trail.splice(i,1); continue; }
+      const p=1-t.life/t.maxLife;
+      const base=COL[t.hue];
+      ctx.beginPath();
+      ctx.fillStyle=base+(p*0.9)+')';
+      ctx.arc(t.x,t.y,t.r*p,0,Math.PI*2); ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle=base+(p*0.16)+')';
+      ctx.arc(t.x,t.y,t.r*p*4,0,Math.PI*2); ctx.fill();
+    }
+    // click-burst sparks
+    for(let i=sparks.length-1;i>=0;i--){
+      const s=sparks[i];
+      s.life++; s.x+=s.vx; s.y+=s.vy; s.vx*=0.97; s.vy*=0.97;
+      if(s.life>=s.maxLife){ sparks.splice(i,1); continue; }
+      const p=1-s.life/s.maxLife;
+      const base=COL[s.hue];
+      ctx.beginPath();
+      ctx.fillStyle=base+(p*0.95)+')';
+      ctx.arc(s.x,s.y,s.r*p+0.6,0,Math.PI*2); ctx.fill();
+    }
     if(!reduce) requestAnimationFrame(draw);
   }
   window.addEventListener('resize', resize);
-  const auroraEl = document.querySelector('.aurora');
   const rootStyle = document.documentElement.style;
   window.addEventListener('mousemove', e=>{
     mouse.x=e.clientX; mouse.y=e.clientY;
     // cursor spotlight
     rootStyle.setProperty('--mx', e.clientX+'px');
     rootStyle.setProperty('--my', e.clientY+'px');
-    // subtle aurora parallax (opposite to cursor)
-    if(!reduce && auroraEl){
-      const px=(e.clientX/window.innerWidth - 0.5);
-      const py=(e.clientY/window.innerHeight - 0.5);
-      auroraEl.style.transform=`translate(${-px*26}px, ${-py*26}px)`;
+    // comet trail particles following the cursor
+    if(!reduce){
+      for(let i=0;i<2;i++){
+        trail.push({
+          x:e.clientX+(Math.random()-0.5)*6, y:e.clientY+(Math.random()-0.5)*6,
+          vx:(Math.random()-0.5)*0.7, vy:(Math.random()-0.5)*0.7 - 0.25,
+          life:0, maxLife:34+Math.random()*22,
+          hue: Math.random()<0.34?'c':(Math.random()<0.5?'m':'am'),
+          r: Math.random()*2+1.4
+        });
+      }
+      if(trail.length>150) trail.splice(0, trail.length-150);
     }
   });
   window.addEventListener('mouseleave', ()=>{ mouse.x=-9999; mouse.y=-9999; });
+  window.addEventListener('click', e=>{
+    if(reduce) return;
+    const n=16;
+    for(let i=0;i<n;i++){
+      const ang=(Math.PI*2*i)/n + Math.random()*0.3;
+      const spd=1.5+Math.random()*2.4;
+      sparks.push({
+        x:e.clientX, y:e.clientY, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
+        life:0, maxLife:38+Math.random()*22,
+        hue: Math.random()<0.5?'c':(Math.random()<0.5?'m':'am'),
+        r: Math.random()*2+1
+      });
+    }
+  });
   resize();
   if(reduce){ draw(0); } else { requestAnimationFrame(draw); }
 
-  /* ---------- FLOW FIELD (glowing neon streams) ---------- */
+  /* ---------- SCROLL-LINKED HUE SHIFT ---------- */
+  const bgfx = document.getElementById('bgfx');
+
+  /* ---------- LIQUID MESH GRADIENT (replaces static aurora blobs) ---------- */
   const flow = document.getElementById('flow');
   if(flow){
     const fctx = flow.getContext('2d');
-    let fparts=[], fW, fH, fDPR;
-    const fcols=['rgba(79,227,208,0.62)','rgba(255,92,138,0.54)','rgba(169,139,255,0.58)','rgba(255,196,107,0.5)'];
+    let blobs=[], fW, fH, fDPR;
+    const palette=['79,227,208','255,92,138','169,139,255','255,196,107','79,227,208','169,139,255'];
     function fResize(){
-      fDPR=Math.min(window.devicePixelRatio||1,2);
+      fDPR=Math.min(window.devicePixelRatio||1,1.5);
       fW=window.innerWidth; fH=window.innerHeight;
       flow.width=fW*fDPR; flow.height=fH*fDPR;
       flow.style.width=fW+'px'; flow.style.height=fH+'px';
       fctx.setTransform(fDPR,0,0,fDPR,0,0);
-      const count=Math.min(Math.max((fW*fH)/2600, 260), 720);
-      fparts=[];
-      for(let i=0;i<count;i++){
-        const x=Math.random()*fW, y=Math.random()*fH;
-        fparts.push({x,y,px:x,py:y,col:fcols[i%fcols.length],life:Math.random()*400});
-      }
-      fctx.clearRect(0,0,fW,fH);
-    }
-    function fAngle(x,y,t){
-      // layered sines create a smooth curling vector field
-      return (Math.sin(x*0.0024 + t*0.7) + Math.cos(y*0.0026 - t*0.55) + Math.sin((x+y)*0.0015 + t)) * 1.35;
+      blobs = palette.map(col=>({
+        col,
+        baseR: (fW+fH)/2 * (0.22 + Math.random()*0.14),
+        ax: fW*(0.14+Math.random()*0.16), ay: fH*(0.14+Math.random()*0.16),
+        fx: 0.05+Math.random()*0.05, fy: 0.045+Math.random()*0.05,
+        px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
+        cx: Math.random()*fW, cy: Math.random()*fH
+      }));
     }
     let ft=0;
     function fTick(){
-      ft+=0.006;
-      // fade existing trails toward transparent (keeps aurora visible behind)
-      fctx.globalCompositeOperation='destination-out';
-      fctx.fillStyle='rgba(0,0,0,0.045)';
-      fctx.fillRect(0,0,fW,fH);
-      // additive glowing strokes
+      ft+=0.0026;
+      fctx.clearRect(0,0,fW,fH);
       fctx.globalCompositeOperation='lighter';
-      for(const p of fparts){
-        const a=fAngle(p.x,p.y,ft);
-        let vx=Math.cos(a)*0.95, vy=Math.sin(a)*0.95;
-        const dx=p.x-mouse.x, dy=p.y-mouse.y, dm=Math.hypot(dx,dy);
-        if(dm<200 && dm>0.1){ const f=(1-dm/200); vx+=(-dy/dm)*f*2.1; vy+=(dx/dm)*f*2.1; }
-        p.px=p.x; p.py=p.y; p.x+=vx; p.y+=vy; p.life++;
-        if(p.x<-5||p.x>fW+5||p.y<-5||p.y>fH+5||p.life>560){
-          p.x=Math.random()*fW; p.y=Math.random()*fH; p.px=p.x; p.py=p.y; p.life=0; continue;
-        }
-        fctx.strokeStyle=p.col;
-        // wide soft halo
-        fctx.lineWidth=3.0; fctx.globalAlpha=0.35;
-        fctx.beginPath(); fctx.moveTo(p.px,p.py); fctx.lineTo(p.x,p.y); fctx.stroke();
-        // bright thin core
-        fctx.lineWidth=1.15; fctx.globalAlpha=1;
-        fctx.beginPath(); fctx.moveTo(p.px,p.py); fctx.lineTo(p.x,p.y); fctx.stroke();
+      const mx = mouse.x>-9000 ? (mouse.x-fW/2)*0.05 : 0;
+      const my = mouse.y>-9000 ? (mouse.y-fH/2)*0.05 : 0;
+      for(const b of blobs){
+        const x = b.cx + Math.sin(ft*b.fx + b.px)*b.ax + mx;
+        const y = b.cy + Math.cos(ft*b.fy + b.py)*b.ay + my;
+        const g = fctx.createRadialGradient(x,y,0,x,y,b.baseR);
+        g.addColorStop(0, `rgba(${b.col},0.55)`);
+        g.addColorStop(1, `rgba(${b.col},0)`);
+        fctx.fillStyle=g;
+        fctx.beginPath(); fctx.arc(x,y,b.baseR,0,Math.PI*2); fctx.fill();
       }
-      fctx.globalAlpha=1;
       fctx.globalCompositeOperation='source-over';
       if(!reduce) requestAnimationFrame(fTick);
     }
     window.addEventListener('resize', fResize);
     fResize();
-    if(!reduce) requestAnimationFrame(fTick);
+    if(reduce){ fTick(); } else { requestAnimationFrame(fTick); }
   }
 
   /* ---------- PROGRESS BAR ---------- */
   const progress = document.getElementById('progress');
   function onScroll(){
     const h = document.documentElement.scrollHeight - window.innerHeight;
-    progress.style.width = (h>0 ? (window.scrollY/h*100) : 0) + '%';
+    const frac = h>0 ? window.scrollY/h : 0;
+    progress.style.width = (frac*100) + '%';
+    if(bgfx) bgfx.style.setProperty('--hue', (frac*34)+'deg');
   }
   window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
 
