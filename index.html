@@ -169,6 +169,39 @@
     max-width:56ch; opacity:0; transform:translateY(6px); transition:opacity .5s ease, transform .5s ease;}
   .finding-text.show{opacity:1; transform:translateY(0);}
 
+  /* ---------- BRAIN DIAGRAM ---------- */
+  .brain-wrap{position:relative; max-width:480px; margin:0 auto; aspect-ratio:300/220;}
+  .brain-svg{position:absolute; inset:0; width:100%; height:100%; display:block;}
+  .brain-node{position:absolute; transform:translate(-50%,-50%); width:26px; height:26px; border-radius:50%;
+    border:2px solid var(--cyan); background:rgba(79,227,208,0.18); color:var(--cyan); font-family:'IBM Plex Mono',monospace;
+    font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
+    animation:brainPulse 2.4s ease-in-out infinite; transition:transform .2s ease, background .2s ease, border-color .2s ease, color .2s ease;}
+  .brain-node:hover{transform:translate(-50%,-50%) scale(1.15); background:rgba(79,227,208,0.32);}
+  .brain-node.active{border-color:var(--magenta); color:var(--magenta); background:rgba(255,92,138,0.22);}
+  @keyframes brainPulse{0%,100%{box-shadow:0 0 0 0 rgba(79,227,208,0.35);}50%{box-shadow:0 0 0 8px rgba(79,227,208,0);}}
+  .brain-caption{margin-top:26px; font-family:'Fraunces',serif; font-style:italic; font-size:16px; color:var(--text);
+    max-width:52ch; margin-left:auto; margin-right:auto; min-height:28px; text-align:center;}
+  @media (prefers-reduced-motion:reduce){ .brain-node{animation:none;} }
+
+  /* ---------- FORTUNE WHEEL ---------- */
+  .wheel-wrap{position:relative; width:220px; height:220px; margin:0 auto;}
+  .wheel{position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 0deg, #FF5C8A 0deg 45deg, #FFC46B 45deg 90deg, #4FE3D0 90deg 135deg, #A98BFF 135deg 180deg,
+      #FF5C8A 180deg 225deg, #FFC46B 225deg 270deg, #4FE3D0 270deg 315deg, #A98BFF 315deg 360deg);
+    box-shadow:0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 4px rgba(255,255,255,0.14); transition:transform 3.6s cubic-bezier(.15,.85,.15,1);}
+  .wheel-icon{position:absolute; top:50%; left:50%; margin:-14px; width:28px; height:28px; display:flex; align-items:center;
+    justify-content:center; font-size:19px; transform:rotate(var(--ang)) translate(86px) rotate(calc(-1 * var(--ang)));}
+  .wheel-pointer{position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:0; height:0;
+    border-left:12px solid transparent; border-right:12px solid transparent; border-top:18px solid var(--amber); z-index:2;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));}
+  .wheel-hub{position:absolute; top:50%; left:50%; width:22px; height:22px; margin:-11px; border-radius:50%;
+    background:var(--paper); box-shadow:0 2px 8px rgba(0,0,0,0.4); z-index:1;}
+  .fortune-text{margin-top:22px; font-family:'Fraunces',serif; font-style:italic; font-size:16.5px; color:var(--text);
+    max-width:44ch; margin-left:auto; margin-right:auto; opacity:0; transform:translateY(6px);
+    transition:opacity .5s ease, transform .5s ease; min-height:26px;}
+  .fortune-text.show{opacity:1; transform:translateY(0);}
+  .fireworks-trigger{margin-top:16px;}
+
   /* ---------- GIFT BOX ---------- */
   .gift-box{display:inline-block; width:160px; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
     animation:cakeFloat 5s ease-in-out infinite; transition:transform .3s ease;}
@@ -510,6 +543,32 @@
   </div>
 </section>
 
+<!-- BRAIN DIAGRAM -->
+<section class="section brain-section" id="brain">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Diagnostic Imaging</span>
+      <h2>Neuroanatomy of a Supermom</h2>
+      <p class="sub">Annotated regions of interest. Click a marker for the full radiology report.</p>
+    </div>
+    <div class="brain-wrap reveal">
+      <svg class="brain-svg" viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="150" cy="112" rx="118" ry="92" fill="rgba(251,246,236,0.05)" stroke="rgba(169,139,255,0.45)" stroke-width="2"/>
+        <path d="M40,112 Q70,70 100,100 Q130,60 150,100 Q170,60 200,100 Q230,70 260,112" fill="none" stroke="rgba(79,227,208,0.3)" stroke-width="1.5"/>
+        <path d="M40,140 Q70,110 100,135 Q130,100 150,135 Q170,100 200,135 Q230,110 260,140" fill="none" stroke="rgba(255,92,138,0.25)" stroke-width="1.5"/>
+        <path d="M150,20 L150,204" stroke="rgba(169,139,255,0.35)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      </svg>
+      <button class="brain-node" type="button" style="top:22%; left:32%;" data-label="Advanced Worrying-About-Us Cortex: hyperactive, 24/7, never once requested a break.">1</button>
+      <button class="brain-node" type="button" style="top:18%; left:62%;" data-label="Recipe Memory Bank: full archive, zero measurements ever written down.">2</button>
+      <button class="brain-node" type="button" style="top:46%; left:80%;" data-label="Mess-Detection Visual Cortex: spots a wrong shoe from across the house.">3</button>
+      <button class="brain-node" type="button" style="top:72%; left:66%;" data-label="Emergency Hug Response Unit: sub-second activation time, zero side effects.">4</button>
+      <button class="brain-node" type="button" style="top:78%; left:34%;" data-label="Schedule-Balancing Cerebellum: runs the whole family's calendar from memory.">5</button>
+      <button class="brain-node" type="button" style="top:50%; left:18%;" data-label="Birthday Recall Hippocampus: remembers everyone's birthday, including her own, which we sometimes forget to.">6</button>
+    </div>
+    <div class="brain-caption" id="brainCaption">Click a marker to view findings.</div>
+  </div>
+</section>
+
 <!-- FIGURES -->
 <section class="section" id="figures">
   <div class="wrap">
@@ -645,6 +704,31 @@
   </div>
 </section>
 
+<!-- FORTUNE WHEEL -->
+<section class="section wheel-section">
+  <div class="wrap" style="text-align:center;">
+    <span class="eyebrow">Randomized Assignment</span>
+    <h2 class="grad-text" style="margin-bottom:6px;">Spin For Today's Fortune</h2>
+    <p class="sub" style="margin:0 auto 30px; max-width:44ch;">One spin, one randomized clinical assignment. No blinding required.</p>
+    <div class="wheel-wrap">
+      <div class="wheel-pointer"></div>
+      <div class="wheel" id="wheel">
+        <span class="wheel-icon" style="--ang:22.5deg">🍀</span>
+        <span class="wheel-icon" style="--ang:67.5deg">✨</span>
+        <span class="wheel-icon" style="--ang:112.5deg">🎂</span>
+        <span class="wheel-icon" style="--ang:157.5deg">💫</span>
+        <span class="wheel-icon" style="--ang:202.5deg">🌟</span>
+        <span class="wheel-icon" style="--ang:247.5deg">🎁</span>
+        <span class="wheel-icon" style="--ang:292.5deg">🕯️</span>
+        <span class="wheel-icon" style="--ang:337.5deg">🔮</span>
+      </div>
+      <div class="wheel-hub"></div>
+    </div>
+    <button id="spinBtn" class="cert-btn" type="button" style="margin-top:24px;">🎡 Spin for a Fortune</button>
+    <div class="fortune-text" id="fortuneText"></div>
+  </div>
+</section>
+
 <!-- FINALE -->
 <section class="finale">
   <div class="wrap">
@@ -690,6 +774,9 @@
       <button id="wishSubmit" class="wish-submit" type="button">Grant it ✨</button>
     </div>
     <div class="wish-granted grad-text" id="wishGranted"></div>
+    <div class="fireworks-trigger">
+      <button id="fireworksBtn" class="cert-btn" type="button">🎆 Launch Fireworks</button>
+    </div>
   </div>
 </section>
 
@@ -828,6 +915,19 @@
     const noise = ctx.createBufferSource(); noise.buffer = buffer;
     const filter = ctx.createBiquadFilter(); filter.type='bandpass'; filter.frequency.value=1800;
     const g = ctx.createGain(); g.gain.value=0.28;
+    noise.connect(filter); filter.connect(g); g.connect(ctx.destination);
+    noise.start(ctx.currentTime);
+  }
+  function fireworkBoom(){
+    if(!soundOn) return;
+    const ctx = ensureCtx();
+    const bufferSize = ctx.sampleRate*0.35;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * Math.pow(1 - i/bufferSize, 2); }
+    const noise = ctx.createBufferSource(); noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=900;
+    const g = ctx.createGain(); g.gain.value=0.22;
     noise.connect(filter); filter.connect(g); g.connect(ctx.destination);
     noise.start(ctx.currentTime);
   }
@@ -1519,6 +1619,33 @@
     }
     ensureConfettiLoop();
   }
+  function spawnFireworkBurst(fx,fy){
+    const col=palette[Math.floor(Math.random()*palette.length)];
+    const count = 46;
+    for(let k=0;k<count;k++){
+      const ang=(k/count)*Math.PI*2; const sp=Math.random()*5+3.4;
+      confettiParts.push({x:fx,y:fy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,s:Math.random()*3+2,c:col,rot:0,vr:0,life:0,type:'f'});
+    }
+    ensureConfettiLoop();
+    fireworkBoom();
+  }
+  function launchRocket(x, targetY){
+    confettiParts.push({
+      x, y:window.innerHeight+10, vx:(Math.random()-0.5)*1.0, vy:-(10+Math.random()*3),
+      s:0, c:palette[Math.floor(Math.random()*palette.length)], rot:0, vr:0, life:0, type:'r', targetY
+    });
+    ensureConfettiLoop();
+  }
+  function launchFireworks(){
+    const w=window.innerWidth, h=window.innerHeight;
+    const n = 5;
+    for(let i=0;i<n;i++){
+      setTimeout(()=>{
+        launchRocket(w*(0.18+Math.random()*0.64), h*(0.14+Math.random()*0.28));
+      }, i*420 + Math.random()*160);
+    }
+    showToast('🎆 Fireworks!');
+  }
   function ensureConfettiLoop(){
     if(confettiRunning) return;
     confettiRunning=true;
@@ -1526,6 +1653,19 @@
       cctx.clearRect(0,0,cc.width,cc.height);
       for(let i=confettiParts.length-1;i>=0;i--){
         const p=confettiParts[i];
+        if(p.type==='r'){
+          p.x+=p.vx; p.y+=p.vy; p.life++;
+          if(p.y<=p.targetY || p.life>150){
+            confettiParts.splice(i,1);
+            spawnFireworkBurst(p.x, Math.max(p.y,p.targetY));
+            continue;
+          }
+          cctx.save(); cctx.globalAlpha=0.9; cctx.strokeStyle=p.c; cctx.lineWidth=2.2; cctx.lineCap='round';
+          cctx.beginPath(); cctx.moveTo(p.x,p.y); cctx.lineTo(p.x-p.vx*2.4,p.y-p.vy*2.4); cctx.stroke();
+          cctx.beginPath(); cctx.fillStyle=p.c; cctx.arc(p.x,p.y,1.8,0,Math.PI*2); cctx.fill();
+          cctx.restore();
+          continue;
+        }
         if(p.type==='f'){ p.vy+=0.06; p.vx*=0.98; p.vy*=0.98; } else { p.vy+=0.3; }
         p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life++;
         const fade=p.type==='f'?Math.max(0,1-p.life/70):Math.max(0,1-p.life/170);
@@ -1727,6 +1867,15 @@
   const certBtn = document.getElementById('certBtn');
   if(certBtn) certBtn.addEventListener('click', downloadCertificate);
 
+  /* ---------- FIREWORKS FINALE ---------- */
+  const fireworksBtn = document.getElementById('fireworksBtn');
+  if(fireworksBtn){
+    fireworksBtn.addEventListener('click', ()=>{
+      unmuteIfNeeded();
+      launchFireworks();
+    });
+  }
+
   /* ---------- APPLAUSE BUTTON ---------- */
   const applauseBtn = document.getElementById('applauseBtn');
   const applauseCountEl = document.getElementById('applauseCount');
@@ -1843,6 +1992,94 @@
   /* ---------- INFINITE TICKER ---------- */
   const tickerTrack = document.getElementById('tickerTrack');
   if(tickerTrack) tickerTrack.innerHTML += tickerTrack.innerHTML;
+
+  /* ---------- BRAIN DIAGRAM ---------- */
+  const brainNodes = document.querySelectorAll('.brain-node');
+  const brainCaption = document.getElementById('brainCaption');
+  if(brainNodes.length && brainCaption){
+    brainNodes.forEach(node=>{
+      node.addEventListener('click', ()=>{
+        brainNodes.forEach(n=>n.classList.remove('active'));
+        node.classList.add('active');
+        brainCaption.textContent = node.dataset.label;
+        unmuteIfNeeded();
+        chime([587.33,880], 0.08, 0.28);
+      });
+    });
+  }
+
+  /* ---------- FORTUNE WHEEL ---------- */
+  const wheel = document.getElementById('wheel');
+  const spinBtn = document.getElementById('spinBtn');
+  const fortuneText = document.getElementById('fortuneText');
+  const fortunes = [
+    "This year, someone else has to find the TV remote.",
+    "A phone call from your daughters is scheduled to make you smile today.",
+    "Your tea will be exactly the right temperature, for once.",
+    "Bonus finding: you get a nap and nobody needs anything from you for a full hour.",
+    "Statistically likely: someone will say \"ask mom\" about something that has nothing to do with you today.",
+    "You will be right about something, and someone will actually admit it.",
+    "Confirmed: more cake is scientifically recommended.",
+    "This wish, whatever it is, is hereby peer-reviewed and approved."
+  ];
+  let wheelRotation = 0, spinning = false;
+  if(wheel && spinBtn && fortuneText){
+    spinBtn.addEventListener('click', ()=>{
+      if(spinning) return;
+      spinning = true;
+      const segIndex = Math.floor(Math.random()*fortunes.length);
+      const segCenter = segIndex*45 + 22.5;
+      const spins = 5 + Math.floor(Math.random()*2);
+      const delta = spins*360 + ((360 - segCenter) % 360);
+      wheelRotation += delta;
+      wheel.style.transform = `rotate(${wheelRotation}deg)`;
+      unmuteIfNeeded();
+      chime([392,440,523.25], 0.07, 0.3);
+      setTimeout(()=>{
+        spinning = false;
+        fortuneText.classList.remove('show');
+        void fortuneText.offsetWidth;
+        fortuneText.textContent = fortunes[segIndex];
+        fortuneText.classList.add('show');
+        const r = wheel.getBoundingClientRect();
+        spawnRing(r.left + r.width/2, r.top + r.height/2);
+        wishSound();
+      }, reduce ? 200 : 3650);
+    });
+  }
+
+  /* ---------- SHAKE TO CELEBRATE (MOBILE) ---------- */
+  let lastShakeTime = 0, lastAccel = null, shakeEnabled = false;
+  function handleMotion(e){
+    const acc = e.accelerationIncludingGravity || e.acceleration;
+    if(!acc || acc.x===null) return;
+    const now = Date.now();
+    if(lastAccel){
+      const delta = Math.abs(acc.x-lastAccel.x)+Math.abs(acc.y-lastAccel.y)+Math.abs(acc.z-lastAccel.z);
+      if(delta > 32 && now-lastShakeTime > 1800){
+        lastShakeTime = now;
+        const w=window.innerWidth, h=window.innerHeight;
+        spawnConfetti(w*0.5, h*0.15, 90);
+        spawnRing(w*0.3, h*0.32); spawnRing(w*0.7, h*0.3);
+        showToast('🎉 Shake detected! Celebrating!');
+        unmuteIfNeeded();
+        popSound();
+      }
+    }
+    lastAccel = acc;
+  }
+  function enableShake(){
+    if(shakeEnabled || reduce) return;
+    if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+      DeviceMotionEvent.requestPermission().then(state=>{
+        if(state==='granted'){ shakeEnabled=true; window.addEventListener('devicemotion', handleMotion); }
+      }).catch(()=>{});
+    } else if(typeof DeviceMotionEvent !== 'undefined'){
+      shakeEnabled = true;
+      window.addEventListener('devicemotion', handleMotion);
+    }
+  }
+  window.addEventListener('touchstart', enableShake, {once:true, passive:true});
 
   /* ---------- LIVE COUNTER ---------- */
   const liveNum = document.getElementById('liveNum');
