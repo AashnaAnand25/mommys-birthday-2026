@@ -45,6 +45,7 @@
   #bgfx{position:fixed; inset:0; z-index:0; filter:hue-rotate(var(--hue,0deg)); transition:filter .9s linear;}
   #flow{position:fixed; inset:0; z-index:0; display:block; filter:blur(58px) saturate(1.8) brightness(1.18);}
   #neural{position:fixed; inset:0; z-index:0; display:block;}
+  #stars{position:fixed; inset:0; z-index:0; display:block;}
 
   .vignette{position:fixed; inset:0; z-index:1; pointer-events:none;
     background:radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(4,6,14,0.75) 100%);}
@@ -55,6 +56,15 @@
     mix-blend-mode:screen; animation:scanSweep 11s cubic-bezier(.4,0,.2,1) infinite;}
   @keyframes scanSweep{0%{transform:translateX(0);}28%{transform:translateX(150vw);}100%{transform:translateX(150vw);}}
   @media (prefers-reduced-motion: reduce){ .scan-sweep{display:none;} }
+
+  /* ---------- DNA HELIX ACCENT ---------- */
+  .dna-accent{position:fixed; top:8%; right:-14px; width:104px; z-index:1; pointer-events:none; opacity:0.16;
+    animation:dnaFloat 9s ease-in-out infinite;}
+  .dna-accent svg{width:100%; height:auto; display:block; animation:dnaSpin 20s linear infinite;}
+  @keyframes dnaFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-24px);}}
+  @keyframes dnaSpin{0%{transform:perspective(500px) rotateY(0deg);}100%{transform:perspective(500px) rotateY(360deg);}}
+  @media (max-width:900px){ .dna-accent{display:none;} }
+  @media (prefers-reduced-motion:reduce){ .dna-accent, .dna-accent svg{animation:none;} }
 
   /* ---------- TICKER ---------- */
   .ticker-wrap{position:relative; overflow:hidden; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
@@ -152,6 +162,12 @@
   .applause-btn:hover{border-color:rgba(255,196,107,0.5); color:var(--amber);}
   .applause-count{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-faint);}
   .applause-count b{color:var(--magenta);}
+
+  /* ---------- RANDOM FINDING GENERATOR ---------- */
+  .finding-wrap{margin-top:14px;}
+  .finding-text{margin-top:14px; font-family:'Fraunces',serif; font-style:italic; font-size:15.5px; color:var(--text);
+    max-width:56ch; opacity:0; transform:translateY(6px); transition:opacity .5s ease, transform .5s ease;}
+  .finding-text.show{opacity:1; transform:translateY(0);}
 
   /* ---------- GIFT BOX ---------- */
   .gift-box{display:inline-block; width:160px; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent;
@@ -386,6 +402,7 @@
 
 <div id="progress"></div>
 <div id="bgfx">
+  <canvas id="stars"></canvas>
   <canvas id="flow"></canvas>
   <canvas id="neural"></canvas>
 </div>
@@ -393,6 +410,22 @@
 <div class="scan-sweep"></div>
 <div class="vignette"></div>
 <div class="spotlight"></div>
+<div class="dna-accent" aria-hidden="true">
+  <svg viewBox="0 0 100 300" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="20,0 50,37.5 80,75 50,112.5 20,150 50,187.5 80,225 50,262.5 20,300" fill="none" stroke="#4FE3D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="80,0 50,37.5 20,75 50,112.5 80,150 50,187.5 20,225 50,262.5 80,300" fill="none" stroke="#FF5C8A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="20" y1="0" x2="80" y2="0" stroke="#A98BFF" stroke-width="2.5"/>
+    <line x1="80" y1="75" x2="20" y2="75" stroke="#FFC46B" stroke-width="2.5"/>
+    <line x1="20" y1="150" x2="80" y2="150" stroke="#A98BFF" stroke-width="2.5"/>
+    <line x1="80" y1="225" x2="20" y2="225" stroke="#FFC46B" stroke-width="2.5"/>
+    <line x1="20" y1="300" x2="80" y2="300" stroke="#A98BFF" stroke-width="2.5"/>
+    <circle cx="20" cy="0" r="4" fill="#4FE3D0"/><circle cx="80" cy="0" r="4" fill="#FF5C8A"/>
+    <circle cx="80" cy="75" r="4" fill="#4FE3D0"/><circle cx="20" cy="75" r="4" fill="#FF5C8A"/>
+    <circle cx="20" cy="150" r="4" fill="#4FE3D0"/><circle cx="80" cy="150" r="4" fill="#FF5C8A"/>
+    <circle cx="80" cy="225" r="4" fill="#4FE3D0"/><circle cx="20" cy="225" r="4" fill="#FF5C8A"/>
+    <circle cx="20" cy="300" r="4" fill="#4FE3D0"/><circle cx="80" cy="300" r="4" fill="#FF5C8A"/>
+  </svg>
+</div>
 <div class="celebrate-btn-wrap"><button class="celebrate-btn" id="celebrateBtn" type="button">🎉 Celebrate</button></div>
 <div class="sound-toggle-wrap"><button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false" title="Toggle ambient sound">🔇</button></div>
 
@@ -469,6 +502,10 @@
     <div class="applause-wrap">
       <button id="applauseBtn" class="applause-btn" type="button">👏 Applause for Mom</button>
       <span class="applause-count" id="applauseCount">0 claps</span>
+    </div>
+    <div class="finding-wrap">
+      <button id="findingBtn" class="applause-btn" type="button">🔬 Generate a Random Finding</button>
+      <div class="finding-text" id="findingText"></div>
     </div>
   </div>
 </section>
@@ -798,7 +835,7 @@
   /* ---------- NEURAL NETWORK BACKGROUND ---------- */
   const canvas = document.getElementById('neural');
   const ctx = canvas.getContext('2d');
-  let W, H, DPR, nodes = [], pulses = [], dust = [], trail = [], sparks = [];
+  let W, H, DPR, nodes = [], pulses = [], dust = [], trail = [], sparks = [], fireflies = [];
   const mouse = {x:-9999, y:-9999};
 
   function resize(){
@@ -831,6 +868,23 @@
         a: Math.random()*0.5 + 0.2,
         tw: Math.random()*Math.PI*2,
         hue: Math.random()<0.5 ? 'c' : (Math.random()<0.5 ? 'm' : 'am')
+      });
+    }
+    initFireflies();
+  }
+  function initFireflies(){
+    fireflies = [];
+    if(reduce) return;
+    const n = 6;
+    for(let i=0;i<n;i++){
+      fireflies.push({
+        x: W/2, y: H/2,
+        angle: Math.random()*Math.PI*2,
+        radius: 22 + Math.random()*30,
+        speed: 0.015 + Math.random()*0.02,
+        lag: 0.02 + Math.random()*0.03,
+        hue: Math.random()<0.4 ? 'c' : (Math.random()<0.5 ? 'm' : 'am'),
+        r: Math.random()*1.6+1.6
       });
     }
   }
@@ -923,6 +977,23 @@
       ctx.fillStyle = base + (d.a*tw*0.14) + ')';
       ctx.arc(d.x, d.y, d.r*4, 0, Math.PI*2); ctx.fill();
     }
+    // firefly swarm companions (drift toward cursor, orbiting gently; idle-wander when no cursor)
+    if(fireflies.length){
+      const targetX = mouse.x>-9000 ? mouse.x : W/2 + Math.sin(ts*0.00025)*W*0.18;
+      const targetY = mouse.y>-9000 ? mouse.y : H/2 + Math.cos(ts*0.0002)*H*0.14;
+      for(const f of fireflies){
+        f.angle += f.speed;
+        const ox = Math.cos(f.angle)*f.radius, oy = Math.sin(f.angle)*f.radius*0.7;
+        f.x += (targetX+ox - f.x)*f.lag;
+        f.y += (targetY+oy - f.y)*f.lag;
+        const base = COL[f.hue];
+        const glow = 0.5 + Math.sin(ts*0.003 + f.angle)*0.3;
+        ctx.beginPath(); ctx.fillStyle = base+(0.65*glow+0.25)+')';
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = base+(0.16*glow)+')';
+        ctx.arc(f.x, f.y, f.r*5, 0, Math.PI*2); ctx.fill();
+      }
+    }
     // pulses (signals traveling along edges)
     if(ts-lastPulse > 260){ spawnPulse(); lastPulse = ts; }
     for(let i=pulses.length-1;i>=0;i--){
@@ -986,6 +1057,7 @@
       }
       if(trail.length>150) trail.splice(0, trail.length-150);
     }
+    if(painting) paintSparkle(e.clientX, e.clientY);
   });
   window.addEventListener('mouseleave', ()=>{ mouse.x=-9999; mouse.y=-9999; });
   window.addEventListener('click', e=>{
@@ -1002,8 +1074,121 @@
       });
     }
   });
+
+  /* ---------- PRESS-AND-HOLD SPARKLE PAINT TRAIL ---------- */
+  let painting = false, lastPaintTime = 0, paintToastShown = false;
+  function paintSparkle(x, y){
+    if(reduce) return;
+    const now = performance.now();
+    if(now - lastPaintTime < 22) return;
+    lastPaintTime = now;
+    for(let i=0;i<3;i++){
+      const a = Math.random()*Math.PI*2, spd = 0.6+Math.random()*1.1;
+      sparks.push({
+        x, y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd,
+        life:0, maxLife:24+Math.random()*16,
+        hue: Math.random()<0.5?'m':(Math.random()<0.5?'c':'am'),
+        r: Math.random()*1.6+0.8
+      });
+    }
+  }
+  window.addEventListener('mousedown', e=>{
+    if(e.target.closest('button, a, input, .card, .gift-box, #cakeWrap, .stamp, .metric, .tag, .eeg')) return;
+    painting = true;
+    if(!paintToastShown){ paintToastShown = true; showToast('✨ Tip: click and drag for a sparkle trail'); }
+    paintSparkle(e.clientX, e.clientY);
+  });
+  window.addEventListener('mouseup', ()=>{ painting = false; });
+  window.addEventListener('touchstart', e=>{
+    const t = e.touches[0]; if(!t) return;
+    mouse.x=t.clientX; mouse.y=t.clientY;
+    paintSparkle(t.clientX, t.clientY);
+  }, {passive:true});
+  window.addEventListener('touchmove', e=>{
+    const t = e.touches[0]; if(!t) return;
+    mouse.x=t.clientX; mouse.y=t.clientY;
+    rootStyle.setProperty('--mx', t.clientX+'px');
+    rootStyle.setProperty('--my', t.clientY+'px');
+    paintSparkle(t.clientX, t.clientY);
+  }, {passive:true});
+
   resize();
   if(reduce){ draw(0); } else { requestAnimationFrame(draw); }
+
+  /* ---------- STARFIELD + SHOOTING STARS ---------- */
+  const starsCanvas = document.getElementById('stars');
+  if(starsCanvas){
+    const sctx = starsCanvas.getContext('2d');
+    let stars=[], comets=[], sW,sH,sDPR;
+    function sResize(){
+      sDPR=Math.min(window.devicePixelRatio||1,2);
+      sW=window.innerWidth; sH=window.innerHeight;
+      starsCanvas.width=sW*sDPR; starsCanvas.height=sH*sDPR;
+      starsCanvas.style.width=sW+'px'; starsCanvas.style.height=sH+'px';
+      sctx.setTransform(sDPR,0,0,sDPR,0,0);
+      const count = Math.min(Math.max((sW*sH)/9000,90),220);
+      stars=[];
+      for(let i=0;i<count;i++){
+        stars.push({
+          x: Math.random()*sW, y: Math.random()*sH,
+          r: Math.random()*1.3+0.4,
+          base: Math.random()*0.5+0.25,
+          tw: Math.random()*Math.PI*2,
+          twSpeed: 0.01+Math.random()*0.025,
+          par: Math.random()*0.4+0.1
+        });
+      }
+    }
+    function spawnComet(){
+      const fromLeft = Math.random()<0.5;
+      const y0 = Math.random()*sH*0.5;
+      const speed = 7+Math.random()*5;
+      comets.push({
+        x: fromLeft? -60 : sW+60, y: y0,
+        vx: (fromLeft?1:-1)*speed, vy: speed*0.42,
+        life:0, maxLife: 70, len: 90+Math.random()*40
+      });
+    }
+    let sT=0, nextComet=4000+Math.random()*5000, lastTs=0;
+    function sTick(ts){
+      const dt = lastTs ? ts-lastTs : 16; lastTs=ts;
+      sctx.clearRect(0,0,sW,sH);
+      const px = mouse.x>-9000 ? (mouse.x-sW/2) : 0;
+      const py = mouse.y>-9000 ? (mouse.y-sH/2) : 0;
+      for(const s of stars){
+        s.tw += s.twSpeed;
+        const a = Math.max(s.base + Math.sin(s.tw)*0.35, 0);
+        sctx.beginPath();
+        sctx.fillStyle = `rgba(220,230,255,${a})`;
+        sctx.arc(s.x - px*s.par*0.05, s.y - py*s.par*0.05, s.r, 0, Math.PI*2);
+        sctx.fill();
+      }
+      sT += dt;
+      if(sT > nextComet){
+        sT = 0; nextComet = 5000+Math.random()*6500;
+        if(!reduce) spawnComet();
+      }
+      for(let i=comets.length-1;i>=0;i--){
+        const c=comets[i];
+        c.life++; c.x+=c.vx; c.y+=c.vy;
+        if(c.life>=c.maxLife || c.x<-100 || c.x>sW+100 || c.y>sH+100){ comets.splice(i,1); continue; }
+        const p = 1-c.life/c.maxLife;
+        const ang = Math.atan2(c.vy,c.vx);
+        const tailX = c.x - Math.cos(ang)*c.len, tailY = c.y - Math.sin(ang)*c.len;
+        const grad = sctx.createLinearGradient(c.x,c.y,tailX,tailY);
+        grad.addColorStop(0, `rgba(255,255,255,${0.9*p})`);
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        sctx.strokeStyle = grad; sctx.lineWidth = 2;
+        sctx.beginPath(); sctx.moveTo(c.x,c.y); sctx.lineTo(tailX,tailY); sctx.stroke();
+        sctx.beginPath(); sctx.fillStyle = `rgba(255,255,255,${p})`;
+        sctx.arc(c.x,c.y,2.2,0,Math.PI*2); sctx.fill();
+      }
+      if(!reduce) requestAnimationFrame(sTick);
+    }
+    window.addEventListener('resize', sResize);
+    sResize();
+    if(reduce){ sTick(0); } else { requestAnimationFrame(sTick); }
+  }
 
   /* ---------- SCROLL-LINKED HUE SHIFT ---------- */
   const bgfx = document.getElementById('bgfx');
@@ -1560,6 +1745,38 @@
       }
       unmuteIfNeeded();
       clapSound();
+    });
+  }
+
+  /* ---------- RANDOM FINDING GENERATOR ---------- */
+  const findingBtn = document.getElementById('findingBtn');
+  const findingText = document.getElementById('findingText');
+  const findings = [
+    "Finding: subjects exposed to her hugs show a 340% increase in feeling okay again.",
+    "Finding: her patience remains statistically undefeated, even during furniture assembly.",
+    "Finding: 100% of family recipes taste better when she's the one stirring the pot.",
+    "Finding: her advice-to-regret ratio is the best-documented case in family research history.",
+    "Finding: no control group needed, she's simply irreplaceable across every trial.",
+    "Finding: correlation between \"Mom's on the phone\" and \"problem gets solved\" approaches r = 1.0.",
+    "Finding: her sense of humor has never once needed a p-value to prove it's funny.",
+    "Finding: replication study #47 confirms she still remembers everyone's birthday, not just her own.",
+    "Finding: her worry-per-child metric remains high, but her love-per-child metric is measurably higher.",
+    "Finding: further research is needed on how she gets everything done before 8am."
+  ];
+  let lastFindingIndex = -1;
+  if(findingBtn && findingText){
+    findingBtn.addEventListener('click', ()=>{
+      let i = Math.floor(Math.random()*findings.length);
+      if(findings.length>1){ while(i===lastFindingIndex) i = Math.floor(Math.random()*findings.length); }
+      lastFindingIndex = i;
+      findingText.classList.remove('show');
+      void findingText.offsetWidth;
+      findingText.textContent = findings[i];
+      findingText.classList.add('show');
+      const r = findingBtn.getBoundingClientRect();
+      spawnRing(r.left + r.width/2, r.top + r.height/2);
+      unmuteIfNeeded();
+      chime([523.25,659.25,783.99], 0.08, 0.4);
     });
   }
 
